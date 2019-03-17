@@ -1,0 +1,38 @@
+Goals scored: 3				Opposition goals: 1
+D entries: 13				Opposition D entries: 9
+	 Carry: 7
+	 Pass: 6
+	 Tackle in D: 0
+	 Interception in D: 0
+	 No outcome: 6
+End of D entries by method 
+	 Free conceded: 2
+	 Ball out of play
+		 Retained possession: 0
+		 Opposition ball: 0
+	 Opposition carry out: 1
+	 Opposition pass out: 4
+	 Carry out: 0
+	 Pass out: 0
+	 Missed PS: 0
+	 Goal: 3
+	 Other: 0
+Shots: 9				Opposition shots: 6
+	 On target: 8  (88%)
+Penalty Corners: 4			Opposition PCs: 1
+Turnover wins: 19
+	 Tackles: 8
+	 Interceptions: 11
+Turnover losses: 24
+	 Tackles: 7
+	 Interceptions: 11
+Defensive errors: 17
+	 Missed tackles: 6
+	 Mistraps: 11
+Eliminations: 7
+	 Left: 3
+	 Right: 4
+Frees won: 10
+Frees conceded: 13
+Completed passes: 158
+	 Pass completion: 90 %
