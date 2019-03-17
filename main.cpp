@@ -1,7 +1,7 @@
 //
-//  Outdoor Hockey Program
+//  Indoor Hockey Program
 //
-//  Created on 25/08/2017.
+//  Created on 18/09/2017.
 //  Copyright © 2017 Anthony Kattuman. All rights reserved.
 
 #include <SFML/Graphics.hpp>
@@ -48,6 +48,7 @@
 #define INTO_D 13
 #define TYPE_2 20
 #define TYPE_3 21
+#define TYPE_4 19
 
 #define YES 1
 #define NO 2
@@ -58,11 +59,11 @@
 #define D_ENTRY_ID 16
 #define PC_ID 17
 
-int pitchWidth = 550;
-int pitchHeight = 914;
+int pitchWidth = 440;
+int pitchHeight = 800;
 int pos_x = pitchWidth / 2;
 int pos_y = pitchHeight / 2;
-int passCoordinates[4] = {0};
+int passCoordinates[6] = {0};
 int locationCoordinates[2] = {0};
 int shotCoordinates[2] = {0};
 
@@ -83,10 +84,10 @@ const int FPS = 60;
 const int circleRadius = 7;
 const int lineWidth = 5;
 const int passLineWidth = 2;
-const int dRadius = 150;
+const int dRadius = 220;
 const int carryCircleRadius = 1.5 * circleRadius;
 const int dMapWidth = 2 * pitchWidth;
-const int dMapHeight = pitchHeight/2;
+const int dMapHeight = pitchHeight;
 
 float screenMultiplier = 1;
 
@@ -182,6 +183,7 @@ void dWindow();
 void carryWindow();
 void sidelineWindow();
 void longCornerWindow();
+void boardPassWindow();
 
 void clearPassCoordinates();
 void clearLocationCoordinates();
@@ -236,10 +238,10 @@ void findPlayerNumbers()
                 shirtNumbers[i] = true;
         }
         if (shirtNumbers[i] == true)
-            {
+        {
             playerNumbers[playerCounter] = i;
             playerCounter++;
-            }
+        }
     }
     numberOfPlayers = playerCounter;
 }
@@ -294,7 +296,7 @@ void createFolders()
     std::cin >> foldername;
     int status = 0;
     status = mkdir(foldername.c_str(), ACCESSPERMS);
-	status = mkdir((foldername + "/Intermediates").c_str(), ACCESSPERMS);
+    status = mkdir((foldername + "/Intermediates").c_str(), ACCESSPERMS);
     
     //Folders for each player
     std::string number;
@@ -350,12 +352,12 @@ void summarySheet()
             else if (events[i][TYPE] == 2)
                 dEntries[2]++;
             else if (events[i][TYPE] == 3)
-                {
+            {
                 if (events[i][TYPE_2] == 1)
                     dEntries[3]++;
                 else if (events[i][TYPE_2] == 2)
                     dEntries[4]++;
-                }
+            }
             
             //Count D Entries without any outcome
             int outcomeLoopCounter = i;
@@ -364,36 +366,36 @@ void summarySheet()
             while (events[outcomeLoopCounter][D_ENTRY_ID] == events[i][D_ENTRY_ID] && outcomeCounting == true)
             {
                 if (events[outcomeLoopCounter][0] == SHOT || events[outcomeLoopCounter][0] == PENALTY_CORNER || events[outcomeLoopCounter][0] == PENALTY_STROKE)
-                    {
+                {
                     outcomes++;
                     outcomeCounting = false;
-                    }
+                }
                 outcomeLoopCounter++;
             }
         }
         else if (events[i][0] == BALL_LOST)
-            {
-                turnoverLosses[0]++;
-            }
+        {
+            turnoverLosses[0]++;
+        }
         else if (events[i][0] == SHOT)
         {
             shots[0]++;
             if (events[i][GOAL] == 1)
-                {
+            {
                 goals++;
                 if (events[i][DURING_PC] == YES)
                     PCGoals++;
-                }
+            }
             if (events[i][ON_TARGET] == 1)
                 shots[1]++;
         }
         else if (events[i][0] == BALL_WON)
-            {
-                if (events[i][TYPE] == 1)
-                    turnoverWins[0]++;
-                else
-                    turnoverWins[1]++;
-            }
+        {
+            if (events[i][TYPE] == 1)
+                turnoverWins[0]++;
+            else
+                turnoverWins[1]++;
+        }
         else if (events[i][0] == DEFENSIVE_ERROR)
         {
             if (events[i][TYPE] == 1)
@@ -411,12 +413,12 @@ void summarySheet()
         else if (events[i][0] == FREE_WON)
             frees++;
         else if (events[i][0] == PENALTY_CONCEDED)
-            {
+        {
             if (events[i][TYPE] == 1)
                 freesAgainst++;
             else if (events[i][TYPE] == 2)
                 oppoPCs++;
-            }
+        }
         else if (events[i][0] == OPPO_SHOT)
             oppoShots++;
         else if (events[i][0] == OPPO_D_ENTRY)
@@ -424,32 +426,32 @@ void summarySheet()
         else if (events[i][0] == OPPO_GOAL)
             oppoGoals++;
         else if (events[i][0] == PENALTY_CORNER)
-            {
+        {
             corners++;
             if (events[i][INJECTION_ON_TARGET] == YES)
                 injectionsOnTarget++;
             if (events[i][TRAPPED] == YES)
                 PCTraps++;
-            }
+        }
         else if (events[i][0] == PENALTY_STROKE)
-            {
+        {
             shots[0]++;
             if (events[i][ON_TARGET] == YES)
                 shots[1]++;
             if (events[i][GOAL] == YES)
                 goals++;
-            }
+        }
         else if (events[i][0] == ATT_BALL_OUT_OF_PLAY)
             outOfPlayTurnovers++;
         else if (events[i][0] == END_OF_D_ENTRY)
-            {
+        {
             if (events[i][TYPE] == 1)
-                {
+            {
                 if (events[i + 1][0] == ATT_BALL_OUT_OF_PLAY)
                     endOfDEntries[0]++;
                 else if (events[i + 1][0] == OPPO_BALL_OUT_OF_PLAY)
                     endOfDEntries[1]++;
-                }
+            }
             else if (events[i][TYPE] == 2)
                 endOfDEntries[3]++;
             else if (events[i][TYPE] == 3)
@@ -466,7 +468,7 @@ void summarySheet()
                 endOfDEntries[9]++;
             else if (events[i][TYPE] == 9)
                 endOfDEntries[10]++;
-            }
+        }
     }
     float passCompletion = 0;
     if (passes[0] != 0)
@@ -602,15 +604,15 @@ void printBallWon()
             posY = events[i][4];
             
             if (events[i][TYPE] == 1)
-                {
+            {
                 option1Sprite.setPosition(posX - circleRadius, posY - circleRadius);
                 texture.draw(option1Sprite);
-                }
+            }
             else
-                {
+            {
                 option2Sprite.setPosition(posX - circleRadius, posY - circleRadius);
                 texture.draw(option2Sprite);
-                }
+            }
         }
     }
     
@@ -710,6 +712,13 @@ void printBallLost()
     int posX = 0;
     int posY = 0;
     
+    int x1 = 0;
+    int y1 = 0;
+    int x2 = 0;
+    int y2 = 0;
+    int x3 = 0;
+    int y3 = 0;
+    
     for (int i = 0; i <= counter; i++)
     {
         
@@ -722,32 +731,65 @@ void printBallLost()
             texture.draw(option1Sprite);
         }
         else if (events[i][0] == PASS && events[i][TYPE] == NO)
+        {
+            sf::CircleShape shape(circleRadius);
+            sf::RectangleShape rectangle;
+            shape.setFillColor(sf::Color::Black);
+            rectangle.setFillColor(sf::Color::Black);
+            
+            x1 = events[i][3];
+            y1 = events[i][4];
+            x2 = events[i][5];
+            y2 = events[i][6];
+            x3 = events[i][7];
+            y3 = events[i][8];
+            
+            shape.setPosition(x1 - circleRadius, y1 - circleRadius);
+            texture.draw(shape);
+            
+            if (events[i][TYPE_4] == YES)
             {
-                    sf::CircleShape shape(circleRadius);
-                    sf::RectangleShape rectangle;
-                    shape.setFillColor(sf::Color::Black);
-                    rectangle.setFillColor(sf::Color::Black);
+                shape.setFillColor(sf::Color::Red);
+                shape.setPosition(x3 - circleRadius, y3 - circleRadius);
+                texture.draw(shape);
+                shape.setFillColor(sf::Color::Black);
                 
-                    int x1 = events[i][3];
-                    int y1 = events[i][4];
-                    int x2 = events[i][5];
-                    int y2 = events[i][6];
+                float length = getLength(x1, y1, x3, y3);
+                float angle = getAngle(x1, y1, x3, y3);
+                rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                rectangle.setPosition(x1, y1);
+                rectangle.setRotation(-angle);
+                texture.draw(rectangle);
+                rectangle.setPosition(x3, y3);
+                rectangle.setRotation(-angle + 180);
+                texture.draw(rectangle);
                 
-                    shape.setPosition(x1 - circleRadius, y1 - circleRadius);
-                    texture.draw(shape);
-                
-                    float length = getLength(x1, y1, x2, y2);
-                    float angle = getAngle(x1, y1, x2, y2);
-                    rectangle.setSize(sf::Vector2f(length, passLineWidth));
-                    rectangle.setPosition(x1, y1);
-                    rectangle.setRotation(-angle);
-                    texture.draw(rectangle);
-                    rectangle.setPosition(x2, y2);
-                    rectangle.setRotation(-angle + 180);
-                    texture.draw(rectangle);
-                    option2Sprite.setPosition(x2 - circleRadius, y2 - circleRadius);
-                    texture.draw(option2Sprite);
+                length = getLength(x3, y3, x2, y2);
+                angle = getAngle(x3, y3, x2, y2);
+                rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                rectangle.setPosition(x3, y3);
+                rectangle.setRotation(-angle);
+                texture.draw(rectangle);
+                rectangle.setPosition(x2, y2);
+                rectangle.setRotation(-angle + 180);
+                texture.draw(rectangle);
             }
+            else
+            {
+                float length = getLength(x1, y1, x2, y2);
+                float angle = getAngle(x1, y1, x2, y2);
+                rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                rectangle.setPosition(x1, y1);
+                rectangle.setRotation(-angle);
+                texture.draw(rectangle);
+                rectangle.setPosition(x2, y2);
+                rectangle.setRotation(-angle + 180);
+                texture.draw(rectangle);
+            }
+            
+                option2Sprite.setPosition(x2 - circleRadius, y2 - circleRadius);
+                texture.draw(option2Sprite);
+        }
     }
     
     sf::Texture texture2 = texture.getTexture();
@@ -792,33 +834,66 @@ void printBallLost()
                 option1Sprite.setPosition(posX - circleRadius, posY - circleRadius);
                 texture.draw(option1Sprite);
             }
-            else if (events[i][0] == PASS && events[i][TYPE] == NO && events[i][1] == playerShirtNumber)
+            else if (events[i][0] == PASS && events[i][TYPE] == NO  && events[i][1] == playerShirtNumber)
             {
                 sf::CircleShape shape(circleRadius);
                 sf::RectangleShape rectangle;
                 shape.setFillColor(sf::Color::Black);
                 rectangle.setFillColor(sf::Color::Black);
                 
-                int x1 = events[i][3];
-                int y1 = events[i][4];
-                int x2 = events[i][5];
-                int y2 = events[i][6];
+                x1 = events[i][3];
+                y1 = events[i][4];
+                x2 = events[i][5];
+                y2 = events[i][6];
+                x3 = events[i][7];
+                y3 = events[i][8];
                 
                 shape.setPosition(x1 - circleRadius, y1 - circleRadius);
                 texture.draw(shape);
-                float length = getLength(x1, y1, x2, y2);
-                float angle = getAngle(x1, y1, x2, y2);
-                rectangle.setSize(sf::Vector2f(length, passLineWidth));
-                rectangle.setPosition(x1, y1);
-                rectangle.setRotation(-angle);
-                texture.draw(rectangle);
-                rectangle.setPosition(x2, y2);
-                rectangle.setRotation(-angle + 180);
-                texture.draw(rectangle);
+                
+                if (events[i][TYPE_4] == YES)
+                {
+                    shape.setFillColor(sf::Color::Red);
+                    shape.setPosition(x3 - circleRadius, y3 - circleRadius);
+                    texture.draw(shape);
+                    shape.setFillColor(sf::Color::Black);
+                    
+                    float length = getLength(x1, y1, x3, y3);
+                    float angle = getAngle(x1, y1, x3, y3);
+                    rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                    rectangle.setPosition(x1, y1);
+                    rectangle.setRotation(-angle);
+                    texture.draw(rectangle);
+                    rectangle.setPosition(x3, y3);
+                    rectangle.setRotation(-angle + 180);
+                    texture.draw(rectangle);
+                    
+                    length = getLength(x3, y3, x2, y2);
+                    angle = getAngle(x3, y3, x2, y2);
+                    rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                    rectangle.setPosition(x3, y3);
+                    rectangle.setRotation(-angle);
+                    texture.draw(rectangle);
+                    rectangle.setPosition(x2, y2);
+                    rectangle.setRotation(-angle + 180);
+                    texture.draw(rectangle);
+                }
+                else
+                {
+                    float length = getLength(x1, y1, x2, y2);
+                    float angle = getAngle(x1, y1, x2, y2);
+                    rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                    rectangle.setPosition(x1, y1);
+                    rectangle.setRotation(-angle);
+                    texture.draw(rectangle);
+                    rectangle.setPosition(x2, y2);
+                    rectangle.setRotation(-angle + 180);
+                    texture.draw(rectangle);
+                }
+                
                 option2Sprite.setPosition(x2 - circleRadius, y2 - circleRadius);
                 texture.draw(option2Sprite);
             }
-            
         }
         
         std::string number;
@@ -973,20 +1048,20 @@ void printPenaltiesConceded()
             posY = events[i][4];
             
             if (events[i][TYPE] == 1)
-                {
-                    option1Sprite.setPosition(posX - circleRadius, posY - circleRadius);
-                    texture.draw(option1Sprite);
-                }
+            {
+                option1Sprite.setPosition(posX - circleRadius, posY - circleRadius);
+                texture.draw(option1Sprite);
+            }
             else if (events[i][TYPE] == 2)
             {
                 option2Sprite.setPosition(posX - circleRadius, posY - circleRadius);
                 texture.draw(option2Sprite);
             }
             else if (events[i][TYPE] == 3)
-                {
-                    option3Sprite.setPosition(posX - circleRadius, posY - circleRadius);
-                    texture.draw(option3Sprite);
-                }
+            {
+                option3Sprite.setPosition(posX - circleRadius, posY - circleRadius);
+                texture.draw(option3Sprite);
+            }
         }
     }
     
@@ -1326,6 +1401,8 @@ void printPasses()
     int y1 = 0;
     int x2 = 0;
     int y2 = 0;
+    int x3 = 0;
+    int y3 = 0;
     
     sf::CircleShape shape(circleRadius);
     sf::RectangleShape rectangle;
@@ -1341,21 +1418,60 @@ void printPasses()
             y1 = events[i][4];
             x2 = events[i][5];
             y2 = events[i][6];
+            x3 = events[i][7];
+            y3 = events[i][8];
             
             shape.setPosition(x1 - circleRadius, y1 - circleRadius);
             texture.draw(shape);
-            float length = getLength(x1, y1, x2, y2);
-            float angle = getAngle(x1, y1, x2, y2);
-            rectangle.setSize(sf::Vector2f(length, passLineWidth));
-            rectangle.setPosition(x1, y1);
-            rectangle.setRotation(-angle);
-            texture.draw(rectangle);
-            rectangle.setPosition(x2, y2);
-            rectangle.setRotation(-angle + 180);
-            texture.draw(rectangle);
+            
+            if (events[i][TYPE_4] == YES)
+            {
+                shape.setFillColor(sf::Color::Red);
+                shape.setPosition(x3 - circleRadius, y3 - circleRadius);
+                texture.draw(shape);
+                shape.setFillColor(sf::Color::Black);
+                
+                float length = getLength(x1, y1, x3, y3);
+                float angle = getAngle(x1, y1, x3, y3);
+                rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                rectangle.setPosition(x1, y1);
+                rectangle.setRotation(-angle);
+                texture.draw(rectangle);
+                rectangle.setPosition(x3, y3);
+                rectangle.setRotation(-angle + 180);
+                texture.draw(rectangle);
+                
+                length = getLength(x3, y3, x2, y2);
+                angle = getAngle(x3, y3, x2, y2);
+                rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                rectangle.setPosition(x3, y3);
+                rectangle.setRotation(-angle);
+                texture.draw(rectangle);
+                rectangle.setPosition(x2, y2);
+                rectangle.setRotation(-angle + 180);
+                texture.draw(rectangle);
+            }
+            else
+            {
+                float length = getLength(x1, y1, x2, y2);
+                float angle = getAngle(x1, y1, x2, y2);
+                rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                rectangle.setPosition(x1, y1);
+                rectangle.setRotation(-angle);
+                texture.draw(rectangle);
+                rectangle.setPosition(x2, y2);
+                rectangle.setRotation(-angle + 180);
+                texture.draw(rectangle);
+            }
             
             if (events[i][TYPE] == 1)
             {
+                float angle = 0;
+                if (events[i][TYPE_4] == YES)
+                    angle = getAngle(x3, y3, x2, y2);
+                else
+                    angle = getAngle(x1, y1, x2, y2);
+                
                 arrowSprite.setPosition(x2 - circleRadius * sin(angle * PI/180), y2 - circleRadius * cos (angle * PI/180));
                 arrowSprite.setRotation(-angle + 90);
                 texture.draw(arrowSprite);
@@ -1401,6 +1517,8 @@ void printPasses()
         int y1 = 0;
         int x2 = 0;
         int y2 = 0;
+        int x3 = 0;
+        int y3 = 0;
         
         for (int i = 0; i <= counter; i++)
         {
@@ -1411,21 +1529,60 @@ void printPasses()
                 y1 = events[i][4];
                 x2 = events[i][5];
                 y2 = events[i][6];
+                x3 = events[i][7];
+                y3 = events[i][8];
                 
                 shape.setPosition(x1 - circleRadius, y1 - circleRadius);
                 texture.draw(shape);
-                float length = getLength(x1, y1, x2, y2);
-                float angle = getAngle(x1, y1, x2, y2);
-                rectangle.setSize(sf::Vector2f(length, passLineWidth));
-                rectangle.setPosition(x1, y1);
-                rectangle.setRotation(-angle);
-                texture.draw(rectangle);
-                rectangle.setPosition(x2, y2);
-                rectangle.setRotation(-angle + 180);
-                texture.draw(rectangle);
+                
+                if (events[i][TYPE_4] == YES)
+                {
+                    shape.setFillColor(sf::Color::Red);
+                    shape.setPosition(x3 - circleRadius, y3 - circleRadius);
+                    texture.draw(shape);
+                    shape.setFillColor(sf::Color::Black);
+                    
+                    float length = getLength(x1, y1, x3, y3);
+                    float angle = getAngle(x1, y1, x3, y3);
+                    rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                    rectangle.setPosition(x1, y1);
+                    rectangle.setRotation(-angle);
+                    texture.draw(rectangle);
+                    rectangle.setPosition(x3, y3);
+                    rectangle.setRotation(-angle + 180);
+                    texture.draw(rectangle);
+                    
+                    length = getLength(x3, y3, x2, y2);
+                    angle = getAngle(x3, y3, x2, y2);
+                    rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                    rectangle.setPosition(x3, y3);
+                    rectangle.setRotation(-angle);
+                    texture.draw(rectangle);
+                    rectangle.setPosition(x2, y2);
+                    rectangle.setRotation(-angle + 180);
+                    texture.draw(rectangle);
+                }
+                else
+                {
+                    float length = getLength(x1, y1, x2, y2);
+                    float angle = getAngle(x1, y1, x2, y2);
+                    rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                    rectangle.setPosition(x1, y1);
+                    rectangle.setRotation(-angle);
+                    texture.draw(rectangle);
+                    rectangle.setPosition(x2, y2);
+                    rectangle.setRotation(-angle + 180);
+                    texture.draw(rectangle);
+                }
                 
                 if (events[i][TYPE] == 1)
                 {
+                    float angle = 0;
+                    if (events[i][TYPE_4] == YES)
+                        angle = getAngle(x3, y3, x2, y2);
+                    else
+                        angle = getAngle(x1, y1, x2, y2);
+                    
                     arrowSprite.setPosition(x2 - circleRadius * sin(angle * PI/180), y2 - circleRadius * cos (angle * PI/180));
                     arrowSprite.setRotation(-angle + 90);
                     texture.draw(arrowSprite);
@@ -1437,6 +1594,7 @@ void printPasses()
                 }
             }
         }
+
         
         std::string number;
         number = std::to_string(playerShirtNumber);
@@ -1478,180 +1636,180 @@ void printPlayerSheets()
     int lostBall = 0;
     
     for (int j = 0; j < numberOfPlayers; j++)
+    {
+        goals = 0;
+        frees = 0;
+        freesAgainst = 0;
+        dEntries[0] = 0;
+        dEntries[1] = 0;
+        dEntries[2] = 0;
+        dEntries[3] = 0;
+        dEntries[4] = 0;
+        shots[0] = 0;
+        shots[1] = 0;
+        passes[0] = 0;
+        passes[1] = 0;
+        turnovers = 0;
+        turnoverWins[0] = 0;
+        turnoverWins[1] = 0;
+        turnoverWins[2] = 0;
+        eliminations[0] = 0;
+        eliminations[1] = 0;
+        defensiveErrors[0] = 0;
+        defensiveErrors[1] = 0;
+        cornersWon = 0;
+        strokesWon = 0;
+        receipts = 0;
+        deflections = 0;
+        lostBall = 0;
+        
+        for (int i = 0; i <= counter; i++)
         {
-            goals = 0;
-            frees = 0;
-            freesAgainst = 0;
-            dEntries[0] = 0;
-            dEntries[1] = 0;
-            dEntries[2] = 0;
-            dEntries[3] = 0;
-            dEntries[4] = 0;
-            shots[0] = 0;
-            shots[1] = 0;
-            passes[0] = 0;
-            passes[1] = 0;
-            turnovers = 0;
-            turnoverWins[0] = 0;
-            turnoverWins[1] = 0;
-            turnoverWins[2] = 0;
-            eliminations[0] = 0;
-            eliminations[1] = 0;
-            defensiveErrors[0] = 0;
-            defensiveErrors[1] = 0;
-            cornersWon = 0;
-            strokesWon = 0;
-            receipts = 0;
-            deflections = 0;
-            lostBall = 0;
-            
-            for (int i = 0; i <= counter; i++)
+            if (events[i][1] == playerNumbers[j])
+            {
+                if (events[i][0] == PASS)
                 {
-                if (events[i][1] == playerNumbers[j])
+                    passes[0]++;
+                    if (events[i][TYPE] == YES)
+                        passes[1]++;
+                    else if (events[i][TYPE] == NO)
+                        turnovers++;
+                }
+                else if (events[i][0] == D_ENTRY)
+                {
+                    dEntries[0]++;
+                    if (events[i][TYPE] == 1)
+                        dEntries[1]++;
+                    else if (events[i][TYPE] == 2)
+                        dEntries[2]++;
+                    else if (events[i][TYPE] == 3)
                     {
-                        if (events[i][0] == PASS)
-                        {
-                            passes[0]++;
-                            if (events[i][TYPE] == YES)
-                                passes[1]++;
-                            else if (events[i][TYPE] == NO)
-                                turnovers++;
-                        }
-                        else if (events[i][0] == D_ENTRY)
-                        {
-                            dEntries[0]++;
-                            if (events[i][TYPE] == 1)
-                                dEntries[1]++;
-                            else if (events[i][TYPE] == 2)
-                                dEntries[2]++;
-                            else if (events[i][TYPE] == 3)
-                                {
-                                if (events[i][TYPE_2] == 1)
-                                    dEntries[3]++;
-                                else
-                                    dEntries[4]++;
-                                }
-                        }
-                        else if (events[i][0] == BALL_LOST)
-                            lostBall++;
-                        else if (events[i][0] == SHOT)
-                        {
-                            shots[0]++;
-                            if (events[i][GOAL] == 1)
-                                goals++;
-                            if (events[i][ON_TARGET] == 1)
-                                shots[1]++;
-                        }
-                        else if (events[i][0] == BALL_WON)
-                            {
-                            turnoverWins[0]++;
-                            if (events[i][TYPE] == 1)
-                                turnoverWins[1]++;
-                            else if (events[i][TYPE] == 2)
-                                turnoverWins[2]++;
-                            }
-                        else if (events[i][0] == FREE_WON)
-                            frees++;
-                        else if (events[i][0] == ELIMINATION)
-                            {
-                            if (events[i][TYPE] == LEFT)
-                                eliminations[0]++;
-                            else if (events[i][TYPE] == RIGHT)
-                                eliminations[1]++;
-                            }
-                        else if (events[i][0] == DEFENSIVE_ERROR)
-                        {
-                            if (events[i][TYPE] == 1)
-                                defensiveErrors[0]++;
-                            else if (events[i][TYPE] == 2)
-                                defensiveErrors[1]++;
-                        }
-                        else if (events[i][0] == PENALTY_CONCEDED)
-                        {
-                            if (events[i][TYPE] == 1)
-                                freesAgainst++;
-                        }
-                        else if (events[i][0] == PENALTY_STROKE)
-                        {
-                            shots[0]++;
-                            if (events[i][ON_TARGET] == YES)
-                                shots[1]++;
-                            if (events[i][GOAL] == YES)
-                                goals++;
-                        }
-                    }
-                    if (events[i][2] == playerNumbers[j])
-                    {
-                        if (events[i][0] == PENALTY_CORNER)
-                            cornersWon++;
-                        else if (events[i][0] == PENALTY_STROKE)
-                            strokesWon++;
-                        else if (events[i][0] == PASS)
-                            receipts++;
-                        else if (events[i][0] == SHOT)
-                            deflections++;
-                        
+                        if (events[i][TYPE_2] == 1)
+                            dEntries[3]++;
+                        else
+                            dEntries[4]++;
                     }
                 }
-            
-            float passCompletion = 0;
-            if (passes[0] != 0)
-                passCompletion = (passes[1]/passes[0])*100;
-            else
-                passCompletion = 0;
-            float shotOnTargetPercentage = 0;
-            if (shots[0] != 0)
-                shotOnTargetPercentage = (shots[1]/shots[0])*100;
-            else
-                shotOnTargetPercentage = 0;
-            
-            std::string number;
-
-                if (playerNumbers[j] != 0)
+                else if (events[i][0] == BALL_LOST)
+                    lostBall++;
+                else if (events[i][0] == SHOT)
                 {
-                    number = std::to_string(playerNumbers[j]);
-                    std::ofstream myfile (foldername + "/" + number + "/summary.txt");
-                    if (myfile.is_open())
-                    {
-                        myfile << "Summary sheet: #" + number + "\n\n";
-                        myfile << "Goals scored: " << goals << "\n";
-                        myfile << "D Entries: " << dEntries[0] << "\n";
-                        myfile << "\t Carry: " << dEntries[1] << "\n";
-                        myfile << "\t Pass: " << dEntries[2] << "\n";
-                        myfile << "\t Tackle in D: " << dEntries[3] << "\n";
-                        myfile << "\t Interception in D: " << dEntries[4] << "\n";
-                        myfile << "Penalty Corners Won: " << cornersWon << "\n";
-                        myfile << "Penalty Strokes Won: " << strokesWon << "\n";
-                        myfile << "Shots: " << shots[0] << "\n";
-                        myfile << "\t On target: " << shots[1] << "\n";
-                        myfile << "Deflections: " << deflections << "\n";
-                        myfile << "Turnover wins: " << turnoverWins[0] << "\n";
-                        myfile << "\t Tackle: " << turnoverWins[1] << "\n";
-                        myfile << "\t Interception: " << turnoverWins[2] << "\n";
-                        myfile << "Turnover losses: " << turnovers + lostBall << "\n";
-                        myfile << "\t Tackle: " << lostBall << "\n";
-                        myfile << "\t Interception: " << turnovers << "\n";
-                        myfile << "Defensive Errors: " << defensiveErrors[0] + defensiveErrors[1] << "\n";
-                        myfile << "\t Missed tackles: " << defensiveErrors[0] << "\n";
-                        myfile << "\t Mistraps: " << defensiveErrors[1] << "\n";
-                        myfile << "Eliminations: " << eliminations[0] + eliminations[1] << "\n";
-                        myfile << "\t Left: " << eliminations[0] << "\n";
-                        myfile << "\t Right: " << eliminations[1] << "\n";
-                        myfile << "Frees won: " << frees << "\n";
-                        myfile << "Frees conceded: " << freesAgainst << "\n";
-                        myfile << "Passes: " << passes[0] << "\n";
-                        myfile << "\t Completed: " << passes[1] << " ("<< passCompletion << "%)"<<  "\n";
-                        myfile << "Receipts: " << receipts << "\n";
-                        
-                        myfile.close();
-                    }
+                    shots[0]++;
+                    if (events[i][GOAL] == 1)
+                        goals++;
+                    if (events[i][ON_TARGET] == 1)
+                        shots[1]++;
                 }
+                else if (events[i][0] == BALL_WON)
+                {
+                    turnoverWins[0]++;
+                    if (events[i][TYPE] == 1)
+                        turnoverWins[1]++;
+                    else if (events[i][TYPE] == 2)
+                        turnoverWins[2]++;
+                }
+                else if (events[i][0] == FREE_WON)
+                    frees++;
+                else if (events[i][0] == ELIMINATION)
+                {
+                    if (events[i][TYPE] == LEFT)
+                        eliminations[0]++;
+                    else if (events[i][TYPE] == RIGHT)
+                        eliminations[1]++;
+                }
+                else if (events[i][0] == DEFENSIVE_ERROR)
+                {
+                    if (events[i][TYPE] == 1)
+                        defensiveErrors[0]++;
+                    else if (events[i][TYPE] == 2)
+                        defensiveErrors[1]++;
+                }
+                else if (events[i][0] == PENALTY_CONCEDED)
+                {
+                    if (events[i][TYPE] == 1)
+                        freesAgainst++;
+                }
+                else if (events[i][0] == PENALTY_STROKE)
+                {
+                    shots[0]++;
+                    if (events[i][ON_TARGET] == YES)
+                        shots[1]++;
+                    if (events[i][GOAL] == YES)
+                        goals++;
+                }
+            }
+            if (events[i][2] == playerNumbers[j])
+            {
+                if (events[i][0] == PENALTY_CORNER)
+                    cornersWon++;
+                else if (events[i][0] == PENALTY_STROKE)
+                    strokesWon++;
+                else if (events[i][0] == PASS)
+                    receipts++;
+                else if (events[i][0] == SHOT)
+                    deflections++;
+                
+            }
         }
+        
+        float passCompletion = 0;
+        if (passes[0] != 0)
+            passCompletion = (passes[1]/passes[0])*100;
+        else
+            passCompletion = 0;
+        float shotOnTargetPercentage = 0;
+        if (shots[0] != 0)
+            shotOnTargetPercentage = (shots[1]/shots[0])*100;
+        else
+            shotOnTargetPercentage = 0;
+        
+        std::string number;
+        
+        if (playerNumbers[j] != 0)
+        {
+            number = std::to_string(playerNumbers[j]);
+            std::ofstream myfile (foldername + "/" + number + "/summary.txt");
+            if (myfile.is_open())
+            {
+                myfile << "Summary sheet: #" + number + "\n\n";
+                myfile << "Goals scored: " << goals << "\n";
+                myfile << "D Entries: " << dEntries[0] << "\n";
+                myfile << "\t Carry: " << dEntries[1] << "\n";
+                myfile << "\t Pass: " << dEntries[2] << "\n";
+                myfile << "\t Tackle in D: " << dEntries[3] << "\n";
+                myfile << "\t Interception in D: " << dEntries[4] << "\n";
+                myfile << "Penalty Corners Won: " << cornersWon << "\n";
+                myfile << "Penalty Strokes Won: " << strokesWon << "\n";
+                myfile << "Shots: " << shots[0] << "\n";
+                myfile << "\t On target: " << shots[1] << "\n";
+                myfile << "Deflections: " << deflections << "\n";
+                myfile << "Turnover wins: " << turnoverWins[0] << "\n";
+                myfile << "\t Tackle: " << turnoverWins[1] << "\n";
+                myfile << "\t Interception: " << turnoverWins[2] << "\n";
+                myfile << "Turnover losses: " << turnovers + lostBall << "\n";
+                myfile << "\t Tackle: " << lostBall << "\n";
+                myfile << "\t Interception: " << turnovers << "\n";
+                myfile << "Defensive Errors: " << defensiveErrors[0] + defensiveErrors[1] << "\n";
+                myfile << "\t Missed tackles: " << defensiveErrors[0] << "\n";
+                myfile << "\t Mistraps: " << defensiveErrors[1] << "\n";
+                myfile << "Eliminations: " << eliminations[0] + eliminations[1] << "\n";
+                myfile << "\t Left: " << eliminations[0] << "\n";
+                myfile << "\t Right: " << eliminations[1] << "\n";
+                myfile << "Frees won: " << frees << "\n";
+                myfile << "Frees conceded: " << freesAgainst << "\n";
+                myfile << "Passes: " << passes[0] << "\n";
+                myfile << "\t Completed: " << passes[1] << " ("<< passCompletion << "%)"<<  "\n";
+                myfile << "Receipts: " << receipts << "\n";
+                
+                myfile.close();
+            }
+        }
+    }
 }
 void printDEntryPoints()
 {
     sf::RenderTexture texture;
-    texture.create(pitchWidth, pitchHeight/2);
+    texture.create(pitchWidth, pitchHeight);
     
     sf::Texture pitchBackground;
     pitchBackground.loadFromFile("Resources/pitch.png");
@@ -1684,6 +1842,13 @@ void printDEntryPoints()
     int posX = 0;
     int posY = 0;
     
+    int x1 = 0;
+    int y1 = 0;
+    int x2 = 0;
+    int y2 = 0;
+    int x3 = 0;
+    int y3 = 0;
+    
     for (int i = 0; i <= counter; i++)
     {
         
@@ -1699,39 +1864,81 @@ void printDEntryPoints()
             }
             else if (events[i][TYPE] == 2)
             {
-                int x1 = events[i][3];
-                int y1 = events[i][4];
-                int x2 = events[i][5];
-                int y2 = events[i][6];
+                x1 = events[i][3];
+                y1 = events[i][4];
+                x2 = events[i][5];
+                y2 = events[i][6];
+                x3 = events[i][7];
+                y3 = events[i][8];
                 
                 shape.setPosition(x1 - circleRadius, y1 - circleRadius);
                 texture.draw(shape);
-                float length = getLength(x1, y1, x2, y2);
-                float angle = getAngle(x1, y1, x2, y2);
-                rectangle.setSize(sf::Vector2f(length, passLineWidth));
-                rectangle.setPosition(x1, y1);
-                rectangle.setRotation(-angle);
-                texture.draw(rectangle);
-                rectangle.setPosition(x2, y2);
-                rectangle.setRotation(-angle + 180);
-                texture.draw(rectangle);
                 
-                arrowSprite.setPosition(x2 - circleRadius * sin(angle * PI/180), y2 - circleRadius * cos (angle * PI/180));
-                arrowSprite.setRotation(-angle + 90);
-                texture.draw(arrowSprite);
+                if (events[i][TYPE_4] == YES)
+                {
+                    shape.setFillColor(sf::Color::Red);
+                    shape.setPosition(x3 - circleRadius, y3 - circleRadius);
+                    texture.draw(shape);
+                    shape.setFillColor(sf::Color::Black);
+                    
+                    float length = getLength(x1, y1, x3, y3);
+                    float angle = getAngle(x1, y1, x3, y3);
+                    rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                    rectangle.setPosition(x1, y1);
+                    rectangle.setRotation(-angle);
+                    texture.draw(rectangle);
+                    rectangle.setPosition(x3, y3);
+                    rectangle.setRotation(-angle + 180);
+                    texture.draw(rectangle);
+                    
+                    length = getLength(x3, y3, x2, y2);
+                    angle = getAngle(x3, y3, x2, y2);
+                    rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                    rectangle.setPosition(x3, y3);
+                    rectangle.setRotation(-angle);
+                    texture.draw(rectangle);
+                    rectangle.setPosition(x2, y2);
+                    rectangle.setRotation(-angle + 180);
+                    texture.draw(rectangle);
+                }
+                else
+                {
+                    float length = getLength(x1, y1, x2, y2);
+                    float angle = getAngle(x1, y1, x2, y2);
+                    rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                    rectangle.setPosition(x1, y1);
+                    rectangle.setRotation(-angle);
+                    texture.draw(rectangle);
+                    rectangle.setPosition(x2, y2);
+                    rectangle.setRotation(-angle + 180);
+                    texture.draw(rectangle);
+                }
+                
+                if (events[i][TYPE_2] == YES)
+                {
+                    float angle = 0;
+                    if (events[i][TYPE_4] == YES)
+                        angle = getAngle(x3, y3, x2, y2);
+                    else
+                        angle = getAngle(x1, y1, x2, y2);
+                    
+                    arrowSprite.setPosition(x2 - circleRadius * sin(angle * PI/180), y2 - circleRadius * cos (angle * PI/180));
+                    arrowSprite.setRotation(-angle + 90);
+                    texture.draw(arrowSprite);
+                }
             }
             else if (events[i][TYPE] == 3)
             {
                 if (events[i][TYPE_2] == 1)
-                    {
-                        option1Sprite.setPosition(posX - circleRadius, posY - circleRadius);
-                        texture.draw(option1Sprite);
-                    }
+                {
+                    option1Sprite.setPosition(posX - circleRadius, posY - circleRadius);
+                    texture.draw(option1Sprite);
+                }
                 else if (events[i][TYPE_2] == 2)
-                    {
-                        option2Sprite.setPosition(posX - circleRadius, posY - circleRadius);
-                        texture.draw(option2Sprite);
-                    }
+                {
+                    option2Sprite.setPosition(posX - circleRadius, posY - circleRadius);
+                    texture.draw(option2Sprite);
+                }
             }
         }
     }
@@ -1757,7 +1964,7 @@ void printDEntryPoints()
     {
         int playerShirtNumber = playerNumbers[j];
         sf::RenderTexture texture;
-        texture.create(pitchWidth, pitchHeight/2);
+        texture.create(pitchWidth, pitchHeight);
         texture.clear(sf::Color::Transparent);
         
         sf::Texture pitchBackground;
@@ -1771,94 +1978,247 @@ void printDEntryPoints()
         for (int i = 0; i <= counter; i++)
         {
             
-        if (events[i][0] == D_ENTRY && events[i][1] == playerShirtNumber)
-        {
-            posX = events[i][3];
-            posY = events[i][4];
-
-            if (events[i][TYPE] == 1)
+            if (events[i][0] == D_ENTRY && events[i][1] == playerShirtNumber)
+            {
+                posX = events[i][3];
+                posY = events[i][4];
+                
+                if (events[i][TYPE] == 1)
                 {
-                carryShape.setPosition(posX - circleRadius, posY - circleRadius);
-                texture.draw(carryShape);
+                    carryShape.setPosition(posX - circleRadius, posY - circleRadius);
+                    texture.draw(carryShape);
                 }
-            else if (events[i][TYPE] == 2)
+                else if (events[i][TYPE] == 2)
                 {
-                int x1 = events[i][3];
-                int y1 = events[i][4];
-                int x2 = events[i][5];
-                int y2 = events[i][6];
-
-                shape.setPosition(x1 - circleRadius, y1 - circleRadius);
-                texture.draw(shape);
-                float length = getLength(x1, y1, x2, y2);
-                float angle = getAngle(x1, y1, x2, y2);
-                rectangle.setSize(sf::Vector2f(length, passLineWidth));
-                rectangle.setPosition(x1, y1);
-                rectangle.setRotation(-angle);
-                texture.draw(rectangle);
-                rectangle.setPosition(x2, y2);
-                rectangle.setRotation(-angle + 180);
-                texture.draw(rectangle);
-
-                arrowSprite.setPosition(x2 - circleRadius * sin(angle * PI/180), y2 - circleRadius * cos (angle * PI/180));
-                arrowSprite.setRotation(-angle + 90);
-                texture.draw(arrowSprite);
-                }
-            else if (events[i][TYPE] == 3)
-                {
-                if (events[i][TYPE_2] == 1)
+                    x1 = events[i][3];
+                    y1 = events[i][4];
+                    x2 = events[i][5];
+                    y2 = events[i][6];
+                    x3 = events[i][7];
+                    y3 = events[i][8];
+                    
+                    shape.setPosition(x1 - circleRadius, y1 - circleRadius);
+                    texture.draw(shape);
+                    
+                    if (events[i][TYPE_4] == YES)
                     {
-                    option1Sprite.setPosition(posX - circleRadius, posY - circleRadius);
-                    texture.draw(option1Sprite);
+                        shape.setFillColor(sf::Color::Red);
+                        shape.setPosition(x3 - circleRadius, y3 - circleRadius);
+                        texture.draw(shape);
+                        shape.setFillColor(sf::Color::Black);
+                        
+                        float length = getLength(x1, y1, x3, y3);
+                        float angle = getAngle(x1, y1, x3, y3);
+                        rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                        rectangle.setPosition(x1, y1);
+                        rectangle.setRotation(-angle);
+                        texture.draw(rectangle);
+                        rectangle.setPosition(x3, y3);
+                        rectangle.setRotation(-angle + 180);
+                        texture.draw(rectangle);
+                        
+                        length = getLength(x3, y3, x2, y2);
+                        angle = getAngle(x3, y3, x2, y2);
+                        rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                        rectangle.setPosition(x3, y3);
+                        rectangle.setRotation(-angle);
+                        texture.draw(rectangle);
+                        rectangle.setPosition(x2, y2);
+                        rectangle.setRotation(-angle + 180);
+                        texture.draw(rectangle);
                     }
-                else if (events[i][TYPE_2] == 2)
+                    else
                     {
-                    option2Sprite.setPosition(posX - circleRadius, posY - circleRadius);
-                    texture.draw(option2Sprite);
+                        float length = getLength(x1, y1, x2, y2);
+                        float angle = getAngle(x1, y1, x2, y2);
+                        rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                        rectangle.setPosition(x1, y1);
+                        rectangle.setRotation(-angle);
+                        texture.draw(rectangle);
+                        rectangle.setPosition(x2, y2);
+                        rectangle.setRotation(-angle + 180);
+                        texture.draw(rectangle);
+                    }
+                    
+                    if (events[i][TYPE_2] == YES)
+                    {
+                        float angle = 0;
+                        if (events[i][TYPE_4] == YES)
+                            angle = getAngle(x3, y3, x2, y2);
+                        else
+                            angle = getAngle(x1, y1, x2, y2);
+                        
+                        arrowSprite.setPosition(x2 - circleRadius * sin(angle * PI/180), y2 - circleRadius * cos (angle * PI/180));
+                        arrowSprite.setRotation(-angle + 90);
+                        texture.draw(arrowSprite);
+                    }
+                    x1 = events[i][3];
+                    y1 = events[i][4];
+                    x2 = events[i][5];
+                    y2 = events[i][6];
+                    x3 = events[i][7];
+                    y3 = events[i][8];
+                    
+                    shape.setPosition(x1 - circleRadius, y1 - circleRadius);
+                    texture.draw(shape);
+                    
+                    if (events[i][TYPE_4] == YES)
+                    {
+                        shape.setFillColor(sf::Color::Red);
+                        shape.setPosition(x3 - circleRadius, y3 - circleRadius);
+                        texture.draw(shape);
+                        shape.setFillColor(sf::Color::Black);
+                        
+                        float length = getLength(x1, y1, x3, y3);
+                        float angle = getAngle(x1, y1, x3, y3);
+                        rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                        rectangle.setPosition(x1, y1);
+                        rectangle.setRotation(-angle);
+                        texture.draw(rectangle);
+                        rectangle.setPosition(x3, y3);
+                        rectangle.setRotation(-angle + 180);
+                        texture.draw(rectangle);
+                        
+                        length = getLength(x3, y3, x2, y2);
+                        angle = getAngle(x3, y3, x2, y2);
+                        rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                        rectangle.setPosition(x3, y3);
+                        rectangle.setRotation(-angle);
+                        texture.draw(rectangle);
+                        rectangle.setPosition(x2, y2);
+                        rectangle.setRotation(-angle + 180);
+                        texture.draw(rectangle);
+                    }
+                    else
+                    {
+                        float length = getLength(x1, y1, x2, y2);
+                        float angle = getAngle(x1, y1, x2, y2);
+                        rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                        rectangle.setPosition(x1, y1);
+                        rectangle.setRotation(-angle);
+                        texture.draw(rectangle);
+                        rectangle.setPosition(x2, y2);
+                        rectangle.setRotation(-angle + 180);
+                        texture.draw(rectangle);
+                    }
+                    
+                    if (events[i][TYPE_2] == YES)
+                    {
+                        float angle = 0;
+                        if (events[i][TYPE_4] == YES)
+                            angle = getAngle(x3, y3, x2, y2);
+                        else
+                            angle = getAngle(x1, y1, x2, y2);
+                        
+                        arrowSprite.setPosition(x2 - circleRadius * sin(angle * PI/180), y2 - circleRadius * cos (angle * PI/180));
+                        arrowSprite.setRotation(-angle + 90);
+                        texture.draw(arrowSprite);
+                    }
+                }
+                else if (events[i][TYPE] == 3)
+                {
+                    if (events[i][TYPE_2] == 1)
+                    {
+                        option1Sprite.setPosition(posX - circleRadius, posY - circleRadius);
+                        texture.draw(option1Sprite);
+                    }
+                    else if (events[i][TYPE_2] == 2)
+                    {
+                        option2Sprite.setPosition(posX - circleRadius, posY - circleRadius);
+                        texture.draw(option2Sprite);
                     }
                 }
             }
             else if (events[i][0] == D_ENTRY && events[i][2] == playerShirtNumber)
-                {
-                
+            {
                 if (events[i][TYPE] == 2)
-                    {
-                    int x1 = events[i][3];
-                    int y1 = events[i][4];
-                    int x2 = events[i][5];
-                    int y2 = events[i][6];
+                {
+                    x1 = events[i][3];
+                    y1 = events[i][4];
+                    x2 = events[i][5];
+                    y2 = events[i][6];
+                    x3 = events[i][7];
+                    y3 = events[i][8];
                     
                     shape.setPosition(x1 - circleRadius, y1 - circleRadius);
                     texture.draw(shape);
-                    float length = getLength(x1, y1, x2, y2);
-                    float angle = getAngle(x1, y1, x2, y2);
-                    rectangle.setSize(sf::Vector2f(length, passLineWidth));
-                    rectangle.setPosition(x1, y1);
-                    rectangle.setRotation(-angle);
-                    texture.draw(rectangle);
-                    rectangle.setPosition(x2, y2);
-                    rectangle.setRotation(-angle + 180);
-                    texture.draw(rectangle);
                     
-                    shape.setFillColor(sf::Color::Green);
-                    shape.setPosition(x2 - circleRadius, y2 - circleRadius);
-                    texture.draw(shape);
-                    shape.setFillColor(sf::Color::Black);
-                    
-                    arrowSprite.setPosition(x2 - circleRadius * sin(angle * PI/180), y2 - circleRadius * cos (angle * PI/180));
-                    arrowSprite.setRotation(-angle + 90);
-                    texture.draw(arrowSprite);
+                    if (events[i][TYPE_4] == YES)
+                    {
+                        shape.setFillColor(sf::Color::Red);
+                        shape.setPosition(x3 - circleRadius, y3 - circleRadius);
+                        texture.draw(shape);
+                        shape.setFillColor(sf::Color::Black);
+                        
+                        float length = getLength(x1, y1, x3, y3);
+                        float angle = getAngle(x1, y1, x3, y3);
+                        rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                        rectangle.setPosition(x1, y1);
+                        rectangle.setRotation(-angle);
+                        texture.draw(rectangle);
+                        rectangle.setPosition(x3, y3);
+                        rectangle.setRotation(-angle + 180);
+                        texture.draw(rectangle);
+                        
+                        length = getLength(x3, y3, x2, y2);
+                        angle = getAngle(x3, y3, x2, y2);
+                        rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                        rectangle.setPosition(x3, y3);
+                        rectangle.setRotation(-angle);
+                        texture.draw(rectangle);
+                        rectangle.setPosition(x2, y2);
+                        rectangle.setRotation(-angle + 180);
+                        texture.draw(rectangle);
+                        
+                        if (events[i][TYPE_2] == YES)
+                        {
+                            shape.setFillColor(sf::Color::Green);
+                            shape.setPosition(x2 - circleRadius, y2 - circleRadius);
+                            texture.draw(shape);
+                            shape.setFillColor(sf::Color::Black);
+                            
+                            float angle = getAngle(x3, y3, x2, y2);
+                            arrowSprite.setPosition(x2 - circleRadius * sin(angle * PI/180), y2 - circleRadius * cos (angle * PI/180));
+                            arrowSprite.setRotation(-angle + 90);
+                            texture.draw(arrowSprite);
+                        }
+                    }
+                    else
+                    {
+                        float length = getLength(x1, y1, x2, y2);
+                        float angle = getAngle(x1, y1, x2, y2);
+                        rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                        rectangle.setPosition(x1, y1);
+                        rectangle.setRotation(-angle);
+                        texture.draw(rectangle);
+                        rectangle.setPosition(x2, y2);
+                        rectangle.setRotation(-angle + 180);
+                        texture.draw(rectangle);
+                        
+                        if (events[i][TYPE_2] == YES)
+                        {
+                            shape.setFillColor(sf::Color::Green);
+                            shape.setPosition(x2 - circleRadius, y2 - circleRadius);
+                            texture.draw(shape);
+                            shape.setFillColor(sf::Color::Black);
+                            
+                            float angle = getAngle(x1, y1, x2, y2);
+                            arrowSprite.setPosition(x2 - circleRadius * sin(angle * PI/180), y2 - circleRadius * cos (angle * PI/180));
+                            arrowSprite.setRotation(-angle + 90);
+                            texture.draw(arrowSprite);
+                        }
                     }
                 }
             }
+        }
         std::string number;
         number = std::to_string(playerShirtNumber);
-     
+        
         sf::Texture texture2 = texture.getTexture();
         sf::Image image = texture2.copyToImage();
         image.flipVertically();
         image.saveToFile(foldername + "/" + number + "/Intermediates/d_entries_overlay.png");
-     
+        
         texture.draw(sprite);
         sf::Texture overlayTexture;
         overlayTexture.loadFromFile(foldername + "/" + number +"/Intermediates/d_entries_overlay.png");
@@ -1935,23 +2295,23 @@ void printShotsGoalMap()
             
             //check if deflected
             if (events[i][TYPE_3] == YES)
-                {
-                    int deflectionClearance = 3;
-                    
-                    sf::RectangleShape rectangle;
-                    rectangle.setFillColor(sf::Color::Black);
-                    
-                    rectangle.setSize(sf::Vector2f(2 * (circleRadius + deflectionClearance), 2 * (circleRadius + deflectionClearance)));
-                    rectangle.setPosition(posX - (circleRadius + deflectionClearance), posY - (circleRadius + deflectionClearance));
-                    texture.draw(rectangle);
-                    
-                    rectangle.setFillColor(sf::Color::White);
-                    rectangle.setSize(sf::Vector2f(2 * circleRadius, 2 * circleRadius));
-                    rectangle.setPosition(posX - circleRadius, posY - circleRadius);
-                    texture.draw(rectangle);
-                    
-                    rectangle.setFillColor(sf::Color::Black);
-                }
+            {
+                int deflectionClearance = 3;
+                
+                sf::RectangleShape rectangle;
+                rectangle.setFillColor(sf::Color::Black);
+                
+                rectangle.setSize(sf::Vector2f(2 * (circleRadius + deflectionClearance), 2 * (circleRadius + deflectionClearance)));
+                rectangle.setPosition(posX - (circleRadius + deflectionClearance), posY - (circleRadius + deflectionClearance));
+                texture.draw(rectangle);
+                
+                rectangle.setFillColor(sf::Color::White);
+                rectangle.setSize(sf::Vector2f(2 * circleRadius, 2 * circleRadius));
+                rectangle.setPosition(posX - circleRadius, posY - circleRadius);
+                texture.draw(rectangle);
+                
+                rectangle.setFillColor(sf::Color::Black);
+            }
             
             if (events[i][GOAL] == YES)
             {
@@ -2108,7 +2468,7 @@ void printShotsGoalMap()
                     }
                 }
             }
-
+            
         }
         
         std::string number;
@@ -2131,7 +2491,7 @@ void printShotsGoalMap()
         image.flipVertically();
         image.saveToFile(foldername + "/" + number +"/shots_goal_map.png");
     }
-
+    
 }
 void printShotsDMap()
 {
@@ -2200,72 +2560,72 @@ void printShotsDMap()
             posY = events[i][4] * 2;
             
             if (events[i][TYPE_3] == YES)
+            {
+                sf::RectangleShape rectangle;
+                rectangle.setFillColor(sf::Color::Black);
+                
+                int x2 = events[i][5] * 2;
+                int y2 = events[i][6] * 2;
+                
+                float length = getLength(posX, posY, x2, y2);
+                float angle = getAngle(posX, posY, x2, y2);
+                rectangle.setSize(sf::Vector2f(length, passLineWidth));
+                rectangle.setPosition(posX, posY);
+                rectangle.setRotation(-angle);
+                texture.draw(rectangle);
+                rectangle.setPosition(x2, y2);
+                rectangle.setRotation(-angle + 180);
+                texture.draw(rectangle);
+                deflectionSprite.setPosition(x2 - circleRadius, y2 - circleRadius);
+                texture.draw(deflectionSprite);
+                
+                if (events[i][GOAL] == YES)
                 {
-                    sf::RectangleShape rectangle;
-                    rectangle.setFillColor(sf::Color::Black);
-                    
-                    int x2 = events[i][5] * 2;
-                    int y2 = events[i][6] * 2;
-                    
-                    float length = getLength(posX, posY, x2, y2);
-                    float angle = getAngle(posX, posY, x2, y2);
-                    rectangle.setSize(sf::Vector2f(length, passLineWidth));
-                    rectangle.setPosition(posX, posY);
-                    rectangle.setRotation(-angle);
-                    texture.draw(rectangle);
-                    rectangle.setPosition(x2, y2);
-                    rectangle.setRotation(-angle + 180);
-                    texture.draw(rectangle);
-                    deflectionSprite.setPosition(x2 - circleRadius, y2 - circleRadius);
-                    texture.draw(deflectionSprite);
-                    
-                    if (events[i][GOAL] == YES)
+                    if (events[i][TYPE] == 1)
                     {
-                        if (events[i][TYPE] == 1)
-                        {
-                            option1Sprite.setPosition(posX - circleRadius, posY - circleRadius);
-                            texture.draw(option1Sprite);
-                        }
-                        else if (events[i][TYPE] == 2)
-                        {
-                            option2Sprite.setPosition(posX - circleRadius, posY - circleRadius);
-                            texture.draw(option2Sprite);
-                        }
-                        else if (events[i][TYPE] == 3)
-                        {
-                            option3Sprite.setPosition(posX - circleRadius, posY - circleRadius);
-                            texture.draw(option3Sprite);
-                        }
-                        else if (events[i][TYPE] == 4)
-                        {
-                            option4Sprite.setPosition(posX - circleRadius, posY - circleRadius);
-                            texture.draw(option4Sprite);
-                        }
+                        option1Sprite.setPosition(posX - circleRadius, posY - circleRadius);
+                        texture.draw(option1Sprite);
                     }
-                    else
+                    else if (events[i][TYPE] == 2)
                     {
-                        if (events[i][TYPE] == 1)
-                        {
-                            option5Sprite.setPosition(posX - circleRadius, posY - circleRadius);
-                            texture.draw(option5Sprite);
-                        }
-                        else if (events[i][TYPE] == 2)
-                        {
-                            option6Sprite.setPosition(posX - circleRadius, posY - circleRadius);
-                            texture.draw(option6Sprite);
-                        }
-                        else if (events[i][TYPE] == 3)
-                        {
-                            option7Sprite.setPosition(posX - circleRadius, posY - circleRadius);
-                            texture.draw(option7Sprite);
-                        }
-                        else if (events[i][TYPE] == 4)
-                        {
-                            option8Sprite.setPosition(posX - circleRadius, posY - circleRadius);
-                            texture.draw(option8Sprite);
-                        }
+                        option2Sprite.setPosition(posX - circleRadius, posY - circleRadius);
+                        texture.draw(option2Sprite);
+                    }
+                    else if (events[i][TYPE] == 3)
+                    {
+                        option3Sprite.setPosition(posX - circleRadius, posY - circleRadius);
+                        texture.draw(option3Sprite);
+                    }
+                    else if (events[i][TYPE] == 4)
+                    {
+                        option4Sprite.setPosition(posX - circleRadius, posY - circleRadius);
+                        texture.draw(option4Sprite);
                     }
                 }
+                else
+                {
+                    if (events[i][TYPE] == 1)
+                    {
+                        option5Sprite.setPosition(posX - circleRadius, posY - circleRadius);
+                        texture.draw(option5Sprite);
+                    }
+                    else if (events[i][TYPE] == 2)
+                    {
+                        option6Sprite.setPosition(posX - circleRadius, posY - circleRadius);
+                        texture.draw(option6Sprite);
+                    }
+                    else if (events[i][TYPE] == 3)
+                    {
+                        option7Sprite.setPosition(posX - circleRadius, posY - circleRadius);
+                        texture.draw(option7Sprite);
+                    }
+                    else if (events[i][TYPE] == 4)
+                    {
+                        option8Sprite.setPosition(posX - circleRadius, posY - circleRadius);
+                        texture.draw(option8Sprite);
+                    }
+                }
+            }
             else
             {
                 if (events[i][GOAL] == YES)
@@ -2526,7 +2886,7 @@ void printPCWins()
         {
             posX = events[i][3];
             posY = events[i][4];
-
+            
             option1Sprite.setPosition(posX * 2, posY * 2);
             texture.draw(option1Sprite);
         }
@@ -2749,7 +3109,7 @@ void printShotsDMapLarge()
     {
         int playerShirtNumber = playerNumbers[j];
         sf::RenderTexture texture;
-        texture.create(pitchWidth, pitchHeight/4);
+        texture.create(pitchWidth, pitchHeight/2);
         texture.clear(sf::Color::Transparent);
         
         int posX = 0;
@@ -2905,7 +3265,7 @@ void printPCWinsLarge()
     {
         int playerShirtNumber = playerNumbers[j];
         sf::RenderTexture texture;
-        texture.create(pitchWidth, pitchHeight/4);
+        texture.create(pitchWidth, pitchHeight/2);
         texture.clear(sf::Color::Transparent);
         
         int posX = 0;
@@ -2949,7 +3309,7 @@ void printPSWinsLarge()
     {
         int playerShirtNumber = playerNumbers[j];
         sf::RenderTexture texture;
-        texture.create(pitchWidth, pitchHeight/4);
+        texture.create(pitchWidth, pitchHeight/2);
         texture.clear(sf::Color::Transparent);
         
         int posX = 0;
@@ -3050,6 +3410,7 @@ void printFullPlayerImages()
     }
 }
 
+
 void clearPassCoordinates()
 {
     passCoordinates[0] = 0;
@@ -3135,20 +3496,10 @@ void drawPitchMap()
     rectangle.setFillColor(sf::Color::Black);
     rectangle.setPosition(0, 0);
     texture.draw(rectangle);
-    //attacking 23 line
-    rectangle.setSize(sf::Vector2f(pitchWidth, lineWidth));
-    rectangle.setFillColor(sf::Color::Black);
-    rectangle.setPosition(0, (pitchHeight - lineWidth)/4);
-    texture.draw(rectangle);
     //halfway line
     rectangle.setSize(sf::Vector2f(pitchWidth, lineWidth));
     rectangle.setFillColor(sf::Color::Black);
     rectangle.setPosition(0, (pitchHeight - lineWidth)/2);
-    texture.draw(rectangle);
-    //defensive 23 line
-    rectangle.setSize(sf::Vector2f(pitchWidth, lineWidth));
-    rectangle.setFillColor(sf::Color::Black);
-    rectangle.setPosition(0, 3*(pitchHeight - lineWidth)/4);
     texture.draw(rectangle);
     //bottom line
     rectangle.setSize(sf::Vector2f(pitchWidth, lineWidth));
@@ -3312,14 +3663,14 @@ void passWindow()
         texture.loadFromFile("Resources/pitch.png");
         sf::Sprite sprite;
         sprite.setTexture(texture, true);
-		sprite.setScale(1 / screenMultiplier, 1 / screenMultiplier);
+        sprite.setScale(1 / screenMultiplier, 1 / screenMultiplier);
         window.draw(sprite);
         
         sf::RectangleShape rectangle;
         
         //draw mouse position
         sf::CircleShape shape(circleRadius / screenMultiplier);
-		shape.setPosition(pos_x - circleRadius / screenMultiplier, pos_y - circleRadius / screenMultiplier);
+        shape.setPosition(pos_x - circleRadius / screenMultiplier, pos_y - circleRadius / screenMultiplier);
         shape.setFillColor(sf::Color::Black);
         window.draw(shape);
         
@@ -3389,7 +3740,7 @@ void locationWindow()
         texture.loadFromFile("Resources/pitch.png");
         sf::Sprite sprite;
         sprite.setTexture(texture, true);
-		sprite.setScale(1 / screenMultiplier, 1 / screenMultiplier);
+        sprite.setScale(1 / screenMultiplier, 1 / screenMultiplier);
         window.draw(sprite);
         
         //draw mouse position
@@ -3439,12 +3790,12 @@ void shotWindow()
         texture.loadFromFile("Resources/goal.png");
         sf::Sprite sprite;
         sprite.setTexture(texture, true);
-		sprite.setScale(1 / screenMultiplier, 1 / screenMultiplier);
+        sprite.setScale(1 / screenMultiplier, 1 / screenMultiplier);
         window.draw(sprite);
         
         //draw mouse position
         sf::CircleShape shape(circleRadius * 2 / screenMultiplier);
-        shape.setPosition(pos_x - (circleRadius*2)/screenMultiplier, pos_y - (circleRadius*2)/screenMultiplier);
+        shape.setPosition(pos_x - circleRadius / screenMultiplier, pos_y - circleRadius / screenMultiplier);
         shape.setFillColor(sf::Color::Black);
         window.draw(shape);
         
@@ -3489,7 +3840,7 @@ void dWindow()
         texture.loadFromFile("Resources/d.png");
         sf::Sprite sprite;
         sprite.setTexture(texture, true);
-		sprite.setScale(1 / screenMultiplier, 1 / screenMultiplier);
+        sprite.setScale(1 / screenMultiplier, 1 / screenMultiplier);
         window.draw(sprite);
         
         //draw mouse position
@@ -3524,8 +3875,8 @@ void carryWindow()
                 locationCoordinates[0] = (location.x)/2 * screenMultiplier;
                 
                 //find y coordinate of entry point
-				entryY = sqrt((4 * dRadius*dRadius) / (screenMultiplier*screenMultiplier) - ((dMapWidth / 2) / screenMultiplier - location.x) * ((dMapWidth / 2) / screenMultiplier - location.x));
-				locationCoordinates[1] = (entryY)/2 * screenMultiplier;
+                entryY = sqrt((4 * dRadius*dRadius) / (screenMultiplier*screenMultiplier) - ((dMapWidth / 2) / screenMultiplier - location.x) * ((dMapWidth / 2) / screenMultiplier - location.x));
+                locationCoordinates[1] = (entryY)/2 * screenMultiplier;
                 window.close();
             }
             else
@@ -3543,7 +3894,7 @@ void carryWindow()
         texture.loadFromFile("Resources/d.png");
         sf::Sprite sprite;
         sprite.setTexture(texture, true);
-		sprite.setScale(1 / screenMultiplier, 1 / screenMultiplier);
+        sprite.setScale(1 / screenMultiplier, 1 / screenMultiplier);
         window.draw(sprite);
         
         sf::RectangleShape rectangle;
@@ -3572,6 +3923,175 @@ void carryWindow()
         window.display();
     }
 }
+void boardPassWindow()
+{
+    bool pressed = false;
+    bool pressedTwice = false;
+    
+    sf::RenderWindow window(sf::VideoMode(pitchWidth / screenMultiplier, pitchHeight / screenMultiplier), "");
+    window.setMouseCursorVisible(false);
+    window.setFramerateLimit(FPS);
+    window.requestFocus();
+    
+    sf::ContextSettings settings;
+    settings.antialiasingLevel = 8;
+    
+    while (window.isOpen())
+    {
+        sf::Event event;
+        
+        while(window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                window.close();
+            else if (event.type == event.MouseButtonPressed)
+            {
+                if (pressed == true && pressedTwice == false)
+                {
+                    pressedTwice = true;
+                    sf::Vector2i location = sf::Mouse::getPosition(window);
+                    if (location.x >= (pitchWidth/2)/screenMultiplier)
+                    {
+                        passCoordinates[4] = pitchWidth - lineWidth/2;
+                        passCoordinates[5] = location.y * screenMultiplier;
+                    }
+                    else
+                    {
+                        passCoordinates[4] = lineWidth/2;
+                        passCoordinates[5] = location.y * screenMultiplier;
+                    }
+                }
+                else if (pressed == false)
+                {
+                    pressed = true;
+                    sf::Vector2i location = sf::Mouse::getPosition(window);
+                    passCoordinates[0] = location.x * screenMultiplier;
+                    passCoordinates[1] = location.y * screenMultiplier;
+                }
+                else if (pressedTwice == true)
+                {
+                    sf::Vector2i location = sf::Mouse::getPosition(window);
+                    passCoordinates[2] = location.x * screenMultiplier;
+                    passCoordinates[3] = location.y * screenMultiplier;
+                    window.close();
+                }
+            }
+            else
+            {
+                sf::Vector2i position = sf::Mouse::getPosition(window);
+                pos_x = position.x;
+                pos_y = position.y;
+            }
+        }
+        // clear the window
+        window.clear(sf::Color::White);
+        
+        //draw pitch
+        sf::Texture texture;
+        texture.loadFromFile("Resources/pitch.png");
+        sf::Sprite sprite;
+        sprite.setScale(1/screenMultiplier, 1/screenMultiplier);
+        sprite.setTexture(texture, true);
+        window.draw(sprite);
+        
+        sf::RectangleShape rectangle;
+        
+        //draw mouse position
+        sf::CircleShape shape(circleRadius/screenMultiplier);
+        shape.setPosition(pos_x - circleRadius/screenMultiplier, pos_y - circleRadius/screenMultiplier);
+        shape.setFillColor(sf::Color::Black);
+        window.draw(shape);
+        
+        int boardX = 0;
+        int boardY = pos_y;
+        
+        //if passing spot recorded, draw circle and line.
+        if (pressed == true && pressedTwice == false)
+        {
+            //draw position of pass
+            shape.setPosition((passCoordinates[0] - circleRadius)/screenMultiplier, (passCoordinates[1] - circleRadius)/screenMultiplier);
+            shape.setFillColor(sf::Color::Black);
+            window.draw(shape);
+            
+            if (pos_x >= (pitchWidth/2)/screenMultiplier)
+                boardX = (pitchWidth - lineWidth/2)/screenMultiplier;
+            else
+                boardX = (lineWidth/2)/screenMultiplier;
+            
+            
+            //draw line
+            rectangle.setSize(sf::Vector2f(pitchWidth/screenMultiplier, (passLineWidth * 2)/screenMultiplier));
+            rectangle.setFillColor(sf::Color::Black);
+            rectangle.setPosition(0, pos_y - passLineWidth/screenMultiplier);
+            window.draw(rectangle);
+            
+            //draw board position
+            shape.setPosition(boardX - circleRadius/screenMultiplier, boardY - circleRadius/screenMultiplier);
+            shape.setFillColor(sf::Color::Red);
+            window.draw(shape);
+            
+            //draw line to current mouse position
+            float angle = getAngle(passCoordinates[0]/screenMultiplier, passCoordinates[1]/screenMultiplier, boardX, boardY);
+            float length = getLength(passCoordinates[0]/screenMultiplier, passCoordinates[1]/screenMultiplier, boardX, boardY);
+            
+            rectangle.setSize(sf::Vector2f(length, (passLineWidth/2)/screenMultiplier));
+            rectangle.setFillColor(sf::Color::Black);
+            rectangle.setPosition(passCoordinates[0]/screenMultiplier, passCoordinates[1]/screenMultiplier);
+            rectangle.setRotation(-angle);
+            window.draw(rectangle);
+            rectangle.setSize(sf::Vector2f(length, (passLineWidth/2)/screenMultiplier));
+            rectangle.setFillColor(sf::Color::Black);
+            rectangle.setPosition(boardX, boardY);
+            rectangle.setRotation(-angle + 180);
+            window.draw(rectangle);
+        }
+        if (pressedTwice == true)
+        {
+            //draw position of pass
+            shape.setPosition((passCoordinates[0] - circleRadius)/screenMultiplier, (passCoordinates[1] - circleRadius)/screenMultiplier);
+            shape.setFillColor(sf::Color::Black);
+            window.draw(shape);
+            
+            //draw board position
+            shape.setPosition((passCoordinates[4] - circleRadius)/screenMultiplier, (passCoordinates[5] - circleRadius)/screenMultiplier);
+            shape.setFillColor(sf::Color::Red);
+            window.draw(shape);
+            
+            //draw line to board position
+            float angle = getAngle(passCoordinates[0]/screenMultiplier, passCoordinates[1]/screenMultiplier, passCoordinates[4]/screenMultiplier, passCoordinates[5]/screenMultiplier);
+            float length = getLength(passCoordinates[0]/screenMultiplier, passCoordinates[1]/screenMultiplier, passCoordinates[4]/screenMultiplier, passCoordinates[5]/screenMultiplier);
+            
+            rectangle.setSize(sf::Vector2f(length, (passLineWidth/2)/screenMultiplier));
+            rectangle.setFillColor(sf::Color::Black);
+            rectangle.setPosition(passCoordinates[0]/screenMultiplier, passCoordinates[1]/screenMultiplier);
+            rectangle.setRotation(-angle);
+            window.draw(rectangle);
+            rectangle.setSize(sf::Vector2f(length, (passLineWidth/2)/screenMultiplier));
+            rectangle.setFillColor(sf::Color::Black);
+            rectangle.setPosition(passCoordinates[4]/screenMultiplier, passCoordinates[5]/screenMultiplier);
+            rectangle.setRotation(-angle + 180);
+            window.draw(rectangle);
+            
+            float angle2 = getAngle(passCoordinates[4]/screenMultiplier, passCoordinates[5]/screenMultiplier, pos_x, pos_y);
+            float length2 = getLength(passCoordinates[4]/screenMultiplier, passCoordinates[5]/screenMultiplier, pos_x, pos_y);
+            
+            rectangle.setSize(sf::Vector2f(length2, (passLineWidth/2)/screenMultiplier));
+            rectangle.setFillColor(sf::Color::Black);
+            rectangle.setPosition(passCoordinates[4]/screenMultiplier, passCoordinates[5]/screenMultiplier);
+            rectangle.setRotation(-angle2);
+            window.draw(rectangle);
+            rectangle.setSize(sf::Vector2f(length2, (passLineWidth/2)/screenMultiplier));
+            rectangle.setFillColor(sf::Color::Black);
+            rectangle.setPosition(pos_x, pos_y);
+            rectangle.setRotation(-angle2 + 180);
+            window.draw(rectangle);
+            
+        }
+        
+        // end the current frame
+        window.display();
+    }
+}
 
 void pass()
 {
@@ -3581,32 +4101,99 @@ void pass()
     std::cin >> input;
     events[counter][1] = stringToInt(input);
     input = "";
+    std::cout << "Board?" << std::endl;
+    std::cout << "1. Yes" << std::endl;
+    std::cout << "2. No" << std::endl;
+    std::cin >> input;
+    bool board = false;
+    if (input == "1")
+    {
+        board = true;
+        events[counter][TYPE_4] = YES;
+    }
+    
+    input = "";
     std::cout << "Receiver (#) OR (i - incomplete; m - mistrap; o - out of play)" << std::endl;
     std::cin >> input;
     std::string passType = input;
     events[counter][TYPE] = YES;
     if (input == "i")
-        {
+    {
         events[counter][TYPE] = NO;
         events[counter][2] = 0;
-        }
+    }
     else if (input == "m")
-        {
+    {
         events[counter][TYPE_2] = YES;
         input = "";
         std::cout << "Receiver (#)" << std::endl;
         std::cin >> input;
         events[counter][2] = stringToInt(input);
-        }
+    }
     else if (input == "o")
-        {
+    {
         events[counter][TYPE] = NO;
         events[counter][TYPE_3] = YES;
-        }
+    }
     else
         events[counter][2] = stringToInt(input);
     
-    if (events[counter][DURING_D_ENTRY] == YES || events[counter][DURING_PC] == YES)
+    if (board == true)
+    {
+        if (events[counter][DURING_D_ENTRY] == YES || events[counter][DURING_PC] == YES)
+        {
+            boardPassWindow();
+            events[counter][3] = passCoordinates[0];
+            events[counter][4] = passCoordinates[1];
+            events[counter][5] = passCoordinates[2];
+            events[counter][6] = passCoordinates[3];
+            events[counter][7] = passCoordinates[4];
+            events[counter][8] = passCoordinates[5];
+            bool passNotOutOfD = checkInsideD(passCoordinates[2], passCoordinates[3]);
+            clearPassCoordinates();
+            if (passNotOutOfD == false) //if the pass goes out of the d
+            {
+                events[counter][OUT_OF_D] = YES;
+                activePC = false;
+                activeD = false;
+            }
+        }
+        else
+        {
+            boardPassWindow();
+            events[counter][3] = passCoordinates[0];
+            events[counter][4] = passCoordinates[1];
+            events[counter][5] = passCoordinates[2];
+            events[counter][6] = passCoordinates[3];
+            events[counter][7] = passCoordinates[4];
+            events[counter][8] = passCoordinates[5];
+            bool passIntoD = checkInsideD(passCoordinates[2], passCoordinates[3]);
+            clearPassCoordinates();
+            
+            if (passIntoD == true && events[counter][TYPE] == YES)
+            {
+                counter++;
+                //transfer data about method of D entry to the D entry row itself
+                events[counter][1] = events[counter - 1][1];
+                events[counter][2] = events[counter - 1][2];
+                events[counter][3] = events[counter - 1][3];
+                events[counter][4] = events[counter - 1][4];
+                events[counter][5] = events[counter - 1][5];
+                events[counter][6] = events[counter - 1][6];
+                events[counter][7] = events[counter - 1][7];
+                events[counter][8] = events[counter - 1][8];
+                
+                events[counter][TYPE] = 2;
+                events[counter][TYPE_2] = events[counter - 1][TYPE];
+                events[counter][TYPE_4] = events[counter - 1][TYPE_4];
+                
+                dEntry();
+            }
+        }
+    }
+    else
+    {
+        if (events[counter][DURING_D_ENTRY] == YES || events[counter][DURING_PC] == YES)
         {
             passWindow();
             events[counter][3] = passCoordinates[0];
@@ -3616,13 +4203,13 @@ void pass()
             bool passNotOutOfD = checkInsideD(passCoordinates[2], passCoordinates[3]);
             clearPassCoordinates();
             if (passNotOutOfD == false) //if the pass goes out of the d
-                {
-                    events[counter][OUT_OF_D] = YES;
-                    activePC = false;
-                    activeD = false;
-                }
+            {
+                events[counter][OUT_OF_D] = YES;
+                activePC = false;
+                activeD = false;
+            }
         }
-    else
+        else
         {
             passWindow();
             events[counter][3] = passCoordinates[0];
@@ -3645,24 +4232,27 @@ void pass()
                 
                 events[counter][TYPE] = 2;
                 events[counter][TYPE_2] = events[counter - 1][TYPE];
+                events[counter][TYPE_4] = events[counter - 1][TYPE_4];
                 
                 dEntry();
             }
         }
+    }
     if (passType == "o")
-        {
-            counter++;
-            events[counter][0] = OPPO_BALL_OUT_OF_PLAY;
-        }
+    {
+        counter++;
+        events[counter][0] = OPPO_BALL_OUT_OF_PLAY;
+    }
     else if (passType == "m")
-        {
-            counter++;
-            events[counter][0] = DEFENSIVE_ERROR;
-            events[counter][1] = events[counter - 1][2];
-            events[counter][TYPE] = 2;
-            events[counter][3] = events[counter - 1][5];
-            events[counter][4] = events[counter - 1][6];
-        }
+    {
+        counter++;
+        events[counter][0] = DEFENSIVE_ERROR;
+        events[counter][1] = events[counter - 1][2];
+        events[counter][TYPE] = 2;
+        events[counter][3] = events[counter - 1][5];
+        events[counter][4] = events[counter - 1][6];
+    }
+    input = "";
     counter++;
 }
 void mainMenu()
@@ -3762,18 +4352,18 @@ void dEntry()
             error();
     }
     if (ballOutOfPlayMarker == ATT_BALL_OUT_OF_PLAY)
-        {
+    {
         ballOutOfPlayMarker = 0;
         ballOutOfPlay();
-        }
+    }
     
 }
 void endOfDEntry(int entryPoint)
 {
     if (events[counter - 1][0] == PASS && events[counter - 1][OUT_OF_D] == YES)
-        {
+    {
         events[counter][TYPE] = 7;
-        }
+    }
     else if (events[counter - 1][0] == SHOT && events[counter - 1][GOAL] == YES)
     {
         events[counter][TYPE] = 8;
@@ -3787,20 +4377,20 @@ void endOfDEntry(int entryPoint)
         events[counter][TYPE] = 9;
     }
     else
-        {
-            std::string input = "";
-            input = "";
-            std::cout << "1. Ball out of play" << std::endl;
-            std::cout << "2. Free conceded" << std::endl;
-            std::cout << "3. Opposition pass out of D" << std::endl;
-            std::cout << "4. Opposition carry out of D" << std::endl;
-            std::cout << "5. Carry out of D" << std::endl;
-            std::cout << "6. Other" << std::endl;
-            std::cin >> input;
-            events[counter][TYPE] = stringToInt(input);
-            if (input == "1")
-                ballOutOfPlayMarker = ATT_BALL_OUT_OF_PLAY;
-        }
+    {
+        std::string input = "";
+        input = "";
+        std::cout << "1. Ball out of play" << std::endl;
+        std::cout << "2. Free conceded" << std::endl;
+        std::cout << "3. Opposition pass out of D" << std::endl;
+        std::cout << "4. Opposition carry out of D" << std::endl;
+        std::cout << "5. Carry out of D" << std::endl;
+        std::cout << "6. Other" << std::endl;
+        std::cin >> input;
+        events[counter][TYPE] = stringToInt(input);
+        if (input == "1")
+            ballOutOfPlayMarker = ATT_BALL_OUT_OF_PLAY;
+    }
     events[counter][0] = END_OF_D_ENTRY;
     for (int i = entryPoint; i <= counter; i++)
     {
@@ -3808,7 +4398,7 @@ void endOfDEntry(int entryPoint)
     }
     counter++;
     activeD = false;
-    }
+}
 void endOfPC(int PCentryPoint)
 {
     events[counter][0] = END_OF_PC;
@@ -3900,32 +4490,25 @@ void shot()
     events[counter][3] = locationCoordinates[0];
     events[counter][4] = locationCoordinates[1];
     clearLocationCoordinates();
-    input = "";
-    std::cout << "Shot Type:" << std::endl;
-    std::cout << "1. Hit" << std::endl;
-    std::cout << "2. Flick" << std::endl;
-    std::cout << "3. Push" << std::endl;
-    std::cout << "4. Slap" << std::endl;
-    std::cin >> input;
-    events[counter][12] = stringToInt(input);
+    events[counter][12] = 2; //flick
     input = "";
     std::cout << "Blocked?" << std::endl;
     std::cout << "1. Yes" << std::endl;
     std::cout << "2. No" << std::endl;
     std::cin >> input;
     if (input == "1")
-        {
-            events[counter][TYPE_2] = YES;
-            input = "";
-            std::cout << "On target?" << std::endl;
-            std::cout << "1. Yes" << std::endl;
-            std::cout << "2. No" << std::endl;
-            std::cin >> input;
-            if (input == "1")
-                events[counter][ON_TARGET] = YES;
-            else
-                events[counter][ON_TARGET] = NO;
-        }
+    {
+        events[counter][TYPE_2] = YES;
+        input = "";
+        std::cout << "On target?" << std::endl;
+        std::cout << "1. Yes" << std::endl;
+        std::cout << "2. No" << std::endl;
+        std::cin >> input;
+        if (input == "1")
+            events[counter][ON_TARGET] = YES;
+        else
+            events[counter][ON_TARGET] = NO;
+    }
     else if (input == "2")
     {
         events[counter][TYPE_2] = NO;
@@ -3936,7 +4519,7 @@ void shot()
         std::cin >> input;
         
         if (input == "1")
-            {
+        {
             events[counter][TYPE_3] = YES;
             input = "";
             std::cout << "Deflector #" << std::endl;
@@ -3946,7 +4529,7 @@ void shot()
             events[counter][5] = locationCoordinates[0];
             events[counter][6] = locationCoordinates[1];
             clearLocationCoordinates();
-            }
+        }
         else
             events[counter][TYPE_3] = NO;
         shotWindow();
@@ -3955,30 +4538,30 @@ void shot()
         bool onTarget = checkOnTarget(shotCoordinates[0], shotCoordinates[1]);
         clearShotCoordinates();
         if (onTarget == true)
+        {
+            events[counter][ON_TARGET] = YES;
+            input = "";
+            std::cout << "Goal?" << std::endl;
+            std::cout << "1. Yes" << std::endl;
+            std::cout << "2. No" << std::endl;
+            std::cin >> input;
+            if (input == "2")
             {
-                events[counter][ON_TARGET] = YES;
-                input = "";
-                std::cout << "Goal?" << std::endl;
-                std::cout << "1. Yes" << std::endl;
-                std::cout << "2. No" << std::endl;
-                std::cin >> input;
-                if (input == "2")
-                    {
-                    events[counter][GOAL] = NO;
-                    }
-                else if (input == "1")
-                    {
-                    events[counter][GOAL] = YES;
-                    counter++;
-                    if (events[counter - 1][DURING_PC] == YES)
-                        endOfPC(PCEntryPoint);
-                    endOfDEntry(dEntryPoint);
-                    activePC = false;
-                    activeD = false;
-                    }
-                else
-                    events[counter][GOAL] = -1;
+                events[counter][GOAL] = NO;
             }
+            else if (input == "1")
+            {
+                events[counter][GOAL] = YES;
+                counter++;
+                if (events[counter - 1][DURING_PC] == YES)
+                    endOfPC(PCEntryPoint);
+                endOfDEntry(dEntryPoint);
+                activePC = false;
+                activeD = false;
+            }
+            else
+                events[counter][GOAL] = -1;
+        }
         else
             events[counter][ON_TARGET] = NO;
     }
@@ -4174,7 +4757,7 @@ void freeLost()
     events[counter][1] = stringToInt(input);
 freeType:
     input = "";
-    std::cout << "1. Free Hit" << std::endl;
+    std::cout << "1. Free Push" << std::endl;
     std::cout << "2. Penalty Corner" << std::endl;
     std::cout << "3. Penalty Stroke" << std::endl;
     std::cin >> input;
@@ -4185,10 +4768,11 @@ freeType:
     }
     events[counter][TYPE] = stringToInt(input);
     
-        locationWindow();
-        events[counter][3] = locationCoordinates[0];
-        events[counter][4] = locationCoordinates[1];
-        clearLocationCoordinates();
+    locationWindow();
+    events[counter][3] = locationCoordinates[0];
+    events[counter][4] = locationCoordinates[1];
+    clearLocationCoordinates();
+    
     counter++;
 }
 void oppositionDEntry()
@@ -4248,18 +4832,19 @@ type:
         events[counter][0] = ATT_BALL_OUT_OF_PLAY;
     else
         events[counter][0] = OPPO_BALL_OUT_OF_PLAY;
-
+    
     counter++;
 }
 
 int main()
 {
-	drawImages();
-
-	if (sf::VideoMode::getDesktopMode().height <= 1000)
-		screenMultiplier = 2;
+    
+    drawImages();
     
     bool done = false;
+    
+    if (sf::VideoMode::getDesktopMode().height <= 1000)
+        screenMultiplier = 2;
     
     while (done == false)
     {
@@ -4285,10 +4870,10 @@ int main()
         else if (input == "9")
             dEntryCarry();
         else if (input == "10")
-            {
+        {
             events[counter][TYPE] = OPEN_PLAY;
             penaltyCorner();
-            }
+        }
         else if  (input == "11")
             oppositionDEntry();
         else if  (input == "12")
