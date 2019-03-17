@@ -1,5 +1,5 @@
 //
-//  Hockey Program
+//  Outdoor Hockey Program
 //
 //  Created on 25/08/2017.
 //  Copyright © 2017 Anthony Kattuman. All rights reserved.
